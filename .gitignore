@@ -1,0 +1,4 @@
+build/
+Assets/model.onnx
+.vs/
+out/

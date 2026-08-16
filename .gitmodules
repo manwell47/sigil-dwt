@@ -1,0 +1,6 @@
+[submodule "JUCE"]
+	path = JUCE
+	url = https://github.com/juce-framework/JUCE.git
+[submodule "wavelib"]
+	path = wavelib
+	url = https://github.com/rafat/wavelib.git
