@@ -33,6 +33,8 @@ if(WIN32)
     set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v1.17.1/onnxruntime-win-x64-1.17.1.zip")
 elseif(APPLE)
     set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v1.17.1/onnxruntime-osx-universal2-1.17.1.tgz")
+elseif(UNIX AND NOT APPLE)
+    set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v1.17.1/onnxruntime-linux-x64-1.17.1.tgz")
 endif()
 
 FetchContent_Declare(
@@ -71,6 +73,8 @@ if(WIN32)
     target_link_libraries(SteganographyPlugin PRIVATE ${onnxruntime_SOURCE_DIR}/lib/onnxruntime.lib)
 elseif(APPLE)
     target_link_libraries(SteganographyPlugin PRIVATE ${onnxruntime_SOURCE_DIR}/lib/libonnxruntime.dylib)
+elseif(UNIX AND NOT APPLE)
+    target_link_libraries(SteganographyPlugin PRIVATE ${onnxruntime_SOURCE_DIR}/lib/libonnxruntime.so)
 endif()
 
 target_include_directories(SteganographyPlugin
