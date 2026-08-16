@@ -42,7 +42,7 @@ jobs:
         name: SIGIL_DWT_Windows
         path: |
           build/SteganographyPlugin_artefacts/Release/Standalone/DWT Steganography.exe
-          build/SteganographyPlugin_artefacts/Release/VST3/DWT Steganography.vst3/
+          build/SteganographyPlugin_artefacts/Release/VST3/DWT Steganography.vst3
 
     - name: Archive macOS Artifacts
       if: runner.os == 'macOS'
