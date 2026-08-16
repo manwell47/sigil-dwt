@@ -1,6 +1,6 @@
 <div align="center">
   <br>
-  <h1>🎛️ SIGIL DWT <br><sup>Audio Steganography</sup></h1>
+  <h1>SIGIL DWT <br><sup>Audio Steganography</sup></h1>
   <p>
     <a href="https://raw.githubusercontent.com/manwell47/sigil-dwt/main/Releases/SIGIL_DWT_v1.0_Windows.zip"><img src="https://img.shields.io/badge/Download-v1.0_Windows-00e5ff?style=for-the-badge&logo=download" alt="Download Windows Release"></a>
     <img src="https://img.shields.io/badge/C%2B%2B-20-blue.svg?style=for-the-badge&logo=c%2B%2B" alt="C++20">
