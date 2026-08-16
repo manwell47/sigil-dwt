@@ -1,0 +1,61 @@
+name: Build SIGIL DWT
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Linux Dependencies
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libasound2-dev libjack-jackd2-dev \
+            libx11-dev libxinerama-dev libxext-dev libfreetype6-dev \
+            libwebkit2gtk-4.0-dev libglu1-mesa-dev libcurl4-openssl-dev
+
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build
+      run: cmake --build build --config Release -j 4
+
+    - name: Archive Windows Artifacts
+      if: runner.os == 'Windows'
+      uses: actions/upload-artifact@v4
+      with:
+        name: SIGIL_DWT_Windows
+        path: |
+          build/SteganographyPlugin_artefacts/Release/Standalone/DWT Steganography.exe
+          build/SteganographyPlugin_artefacts/Release/VST3/DWT Steganography.vst3/
+
+    - name: Archive macOS Artifacts
+      if: runner.os == 'macOS'
+      uses: actions/upload-artifact@v4
+      with:
+        name: SIGIL_DWT_macOS
+        path: |
+          build/SteganographyPlugin_artefacts/Release/Standalone/DWT Steganography.app
+          build/SteganographyPlugin_artefacts/Release/VST3/DWT Steganography.vst3
+
+    - name: Archive Linux Artifacts
+      if: runner.os == 'Linux'
+      uses: actions/upload-artifact@v4
+      with:
+        name: SIGIL_DWT_Linux
+        path: |
+          build/SteganographyPlugin_artefacts/Release/Standalone/DWT Steganography
+          build/SteganographyPlugin_artefacts/Release/VST3/DWT Steganography.vst3
