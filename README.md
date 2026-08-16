@@ -9,7 +9,7 @@ Designed with a strict mastering philosophy, SIGIL DWT operates within the safe 
 ## 🚀 Key Technologies
 
 ### 1. Dual Sobel Filter (Luminance + Alpha)
-Unlike naive image converters, SIGIL DWT uses a custom high-precision **Dual Sobel C++ Filter** that operates simultaneously on the Luminance channel and the Alpha channel. This ensures perfect topological extraction of both opaque photographs (JPEGs) and transparent typography/graffiti (PNGs) without flattening backgrounds or destroying delicate line work.
+Unlike naive image converters, SIGIL DWT uses a custom high-precision **Dual Sobel C++ Filter** that operates simultaneously on the Luminance channel and the Alpha channel. This ensures perfect topological extraction of both opaque photographs (JPEGs) and transparent typography/logos (PNGs) without flattening backgrounds or destroying delicate line work.
 
 ### 2. Discrete Wavelet Transform (Daubechies 4)
 Instead of using standard FFT/IFFT overlap-add methods that can introduce smearing and pre-ringing artifacts, the audio engine utilizes **Daubechies 4 (Db4) Discrete Wavelet Transforms (DWT)**. This allows for precise subband isolation and modulation, enabling surgically clean frequency injection with ultra-fast transient response.

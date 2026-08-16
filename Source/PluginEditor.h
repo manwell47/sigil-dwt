@@ -116,12 +116,16 @@ private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> blankingAttach;
     
     juce::ComboBox presetComboBox;
+    juce::TextButton offlineRenderButton{"Offline Render..."};
+    std::unique_ptr<juce::FileChooser> fileChooser;
     
     juce::DropShadowEffect shadowEffect;
     
     PremiumLookAndFeel premiumLookAndFeel;
     
     ManualOverlay manualOverlay;
+    
+    void startOfflineRender();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SteganographyEditor)
 };

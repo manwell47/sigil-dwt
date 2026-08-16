@@ -50,6 +50,9 @@ public:
     // Call this from the Worker Thread
     void processImageInference(const juce::Image& image);
     
+    // Call this to bypass inference and inject a mask directly (e.g., for offline rendering)
+    void setMaskDirectly(const std::vector<float>& newMask);
+    
     // Spectrogram FIFO for the UI (Interleaved: Dry, Wet, Dry, Wet)
     juce::AbstractFifo spectrogramFifo { 65536 };
     std::vector<float> spectrogramData = std::vector<float>(65536, 0.0f);
@@ -63,8 +66,7 @@ private:
     juce::AudioBuffer<float> approxBuffer;
     juce::AudioBuffer<float> detailBuffer;
     
-    // Brickwall Limiter
-    juce::dsp::Limiter<float> limiter;
+    // Limiter removed for 100% audio transparency
     
     // Spectrogram Synthesis State
     std::array<float, 320> phases = { 0.0f };

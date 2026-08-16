@@ -1,6 +1,119 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+class OfflineRenderThread : public juce::ThreadWithProgressWindow
+{
+public:
+    OfflineRenderThread(SteganographyProcessor& p, const juce::File& in, const juce::File& out)
+        : juce::ThreadWithProgressWindow("Rendering Offline...", true, true),
+          processor(p), inFile(in), outFile(out)
+    {
+    }
+
+    void run() override
+    {
+        setProgress(-1.0);
+        setStatusMessage("Initializing Audio Formats...");
+
+        juce::AudioFormatManager formatManager;
+        formatManager.registerBasicFormats();
+
+        std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(inFile));
+        if (reader == nullptr)
+        {
+            juce::MessageManager::callAsync([]() {
+                juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon, "Error", "Could not open input audio file.");
+            });
+            return;
+        }
+
+        juce::WavAudioFormat wavFormat;
+        std::unique_ptr<juce::OutputStream> outStream(new juce::FileOutputStream(outFile));
+        std::unique_ptr<juce::AudioFormatWriter> writer(wavFormat.createWriterFor(
+            outStream,
+            juce::AudioFormatWriterOptions()
+                .withSampleRate(reader->sampleRate)
+                .withNumChannels((int)reader->numChannels)
+                .withBitsPerSample(32)
+                .withSampleFormat(juce::AudioFormatWriterOptions::SampleFormat::floatingPoint)
+        ));
+
+        if (writer == nullptr)
+        {
+            juce::MessageManager::callAsync([]() {
+                juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon, "Error", "Could not create output audio file.");
+            });
+            return;
+        }
+
+        // Create temporary processor and copy settings
+        SteganographyProcessor tempProcessor;
+        
+        // Ensure the internal sample rate and block size are set properly so getSampleRate() returns the correct value
+        tempProcessor.setPlayConfigDetails(reader->numChannels, reader->numChannels, reader->sampleRate, 512);
+        
+        // Call prepareToPlay FIRST, because it calls maskBridge.allocate() which erases the mask!
+        tempProcessor.prepareToPlay(reader->sampleRate, 512);
+        
+        tempProcessor.treeState.getParameter("targetFreq")->setValue(processor.treeState.getParameter("targetFreq")->getValue());
+        tempProcessor.treeState.getParameter("intensity")->setValue(processor.treeState.getParameter("intensity")->getValue());
+        tempProcessor.treeState.getParameter("duration")->setValue(processor.treeState.getParameter("duration")->getValue());
+        tempProcessor.treeState.getParameter("blanking")->setValue(processor.treeState.getParameter("blanking")->getValue());
+        
+        // Now it is safe to inject the mask
+        tempProcessor.setMaskDirectly(processor.maskBridge.getReadBuffer());
+
+        // Ensure the buffer matches the processor's output channels to avoid memory corruption
+        int numOutChans = tempProcessor.getTotalNumOutputChannels();
+        juce::AudioBuffer<float> buffer(juce::jmax((int)reader->numChannels, numOutChans), 512);
+        juce::MidiBuffer midi;
+
+        int64 totalSamples = reader->lengthInSamples;
+        int64 samplesProcessed = 0;
+
+        while (samplesProcessed < totalSamples)
+        {
+            if (threadShouldExit())
+                break;
+
+            int numSamples = (int)juce::jmin((int64)512, totalSamples - samplesProcessed);
+            
+            buffer.clear();
+            reader->read(&buffer, 0, numSamples, samplesProcessed, true, true);
+
+            // Ensure we process an EVEN number of samples because WaveletProcessor downsamples by 2!
+            // If numSamples is odd, we process one extra sample of silence (which was cleared above)
+            int processSamples = numSamples;
+            if (processSamples % 2 != 0)
+                processSamples++;
+
+            // Create a sub-buffer of exactly processSamples to avoid processing trailing garbage
+            juce::AudioBuffer<float> processBuffer(buffer.getArrayOfWritePointers(), buffer.getNumChannels(), processSamples);
+            tempProcessor.processBlock(processBuffer, midi);
+
+            // Write ONLY the exact numSamples back to the file
+            writer->writeFromAudioSampleBuffer(buffer, 0, numSamples);
+
+            samplesProcessed += numSamples;
+            setProgress(samplesProcessed / (double)totalSamples);
+            setStatusMessage("Rendering... " + juce::String(juce::roundToInt((samplesProcessed / (double)totalSamples) * 100.0)) + "%");
+        }
+        
+        tempProcessor.releaseResources();
+        
+        if (threadShouldExit())
+        {
+            writer.reset();
+            outFile.deleteFile();
+        }
+    }
+
+private:
+    SteganographyProcessor& processor;
+    juce::File inFile;
+    juce::File outFile;
+};
+
 //==============================================================================
 ManualOverlay::ManualOverlay()
 {
@@ -273,6 +386,12 @@ SteganographyEditor::SteganographyEditor (SteganographyProcessor& p)
     addAndMakeVisible(spectrogram);
     addAndMakeVisible(aboutButton);
 
+    if (audioProcessor.wrapperType == juce::AudioProcessor::wrapperType_Standalone)
+    {
+        addAndMakeVisible(offlineRenderButton);
+        offlineRenderButton.onClick = [this]() { startOfflineRender(); };
+    }
+
     setLookAndFeel(&premiumLookAndFeel);
 
     shadowEffect.setShadowProperties({juce::Colours::black.withAlpha(0.6f), 15, juce::Point<int>(0, 8)});
@@ -367,9 +486,15 @@ void SteganographyEditor::resized()
     
     area.removeFromTop(10);
     
-    // Bottom bar for About button
+    // Bottom bar for About button and Offline Render
     auto bottomArea = area.removeFromBottom(25);
     aboutButton.setBounds(bottomArea.removeFromRight(150));
+    
+    if (audioProcessor.wrapperType == juce::AudioProcessor::wrapperType_Standalone)
+    {
+        offlineRenderButton.setBounds(bottomArea.removeFromLeft(150));
+    }
+    
     area.removeFromBottom(10);
     
     // Controls panel
@@ -394,4 +519,40 @@ void SteganographyEditor::resized()
     spectrogram.setBounds(area.reduced(5));
     
     manualOverlay.setBounds(getLocalBounds());
+}
+
+void SteganographyEditor::startOfflineRender()
+{
+    if (!audioProcessor.hasValidMask.load())
+    {
+        juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon, "Wait", "Please wait for the image analysis to complete before rendering.");
+        return;
+    }
+
+    fileChooser = std::make_unique<juce::FileChooser>("Select input audio file...", 
+                                                      juce::File::getSpecialLocation(juce::File::userHomeDirectory),
+                                                      "*.wav;*.aif;*.aiff;*.flac");
+
+    auto chooserFlags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles;
+
+    fileChooser->launchAsync(chooserFlags, [this](const juce::FileChooser& fc) {
+        auto inFile = fc.getResult();
+        if (inFile.existsAsFile())
+        {
+            fileChooser = std::make_unique<juce::FileChooser>("Save output audio file...", 
+                                                              inFile.getParentDirectory().getChildFile(inFile.getFileNameWithoutExtension() + "_stego.wav"),
+                                                              "*.wav");
+                                                              
+            auto saveFlags = juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles | juce::FileBrowserComponent::warnAboutOverwriting;
+            
+            fileChooser->launchAsync(saveFlags, [this, inFile](const juce::FileChooser& fcSave) {
+                auto outFile = fcSave.getResult();
+                if (outFile != juce::File())
+                {
+                    auto* thread = new OfflineRenderThread(audioProcessor, inFile, outFile);
+                    thread->launchThread();
+                }
+            });
+        }
+    });
 }

@@ -24,10 +24,11 @@ SteganographyProcessor::SteganographyProcessor()
 juce::AudioProcessorValueTreeState::ParameterLayout SteganographyProcessor::createParameterLayout()
 {
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
-    
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("intensity", "Intensity", 0.0f, 1.0f, 0.5f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("targetFreq", "Target Freq", 15000.0f, 20000.0f, 17000.0f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("duration", "Duration (s)", 1.0f, 10.0f, 4.0f));
+
+    // Default values set to "Stealth" preset
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("targetFreq", "Target Frequency", 10000.0f, 22000.0f, 19000.0f));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("intensity", "Intensity", 0.0f, 1.0f, 0.15f));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("duration", "Duration (s)", 1.0f, 10.0f, 8.0f));
     params.push_back(std::make_unique<juce::AudioParameterFloat>("blanking", "Blanking (s)", 0.0f, 10.0f, 6.0f));
 
     return { params.begin(), params.end() };
@@ -59,10 +60,6 @@ void SteganographyProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     spec.sampleRate = sampleRate;
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = getTotalNumOutputChannels();
-    
-    limiter.prepare(spec);
-    limiter.setThreshold(-0.5f); // Brickwall limit slightly below 0dB
-    limiter.setRelease(10.0f);
     
     spectrogramPushBuffer.resize(samplesPerBlock * 2, 0.0f);
     
@@ -125,21 +122,21 @@ void SteganographyProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     
     // Get High-Frequency Energy envelope for Steganographic Modulation
     float detailEnergy = 0.0f;
-    if (detailBuffer.getNumChannels() > 0) {
-        auto* detailRead = detailBuffer.getReadPointer(0);
-        for (int i = 0; i < detailBuffer.getNumSamples(); ++i) {
-            detailEnergy += std::abs(detailRead[i]);
+    int numChannels = detailBuffer.getNumChannels();
+    if (numChannels > 0) {
+        for (int ch = 0; ch < numChannels; ++ch) {
+            auto* detailRead = detailBuffer.getReadPointer(ch);
+            for (int i = 0; i < detailBuffer.getNumSamples(); ++i) {
+                detailEnergy += std::abs(detailRead[i]);
+            }
         }
-        detailEnergy /= detailBuffer.getNumSamples();
+        detailEnergy /= (detailBuffer.getNumSamples() * numChannels);
     }
     float envelope = detailEnergy + 0.05f; // floor
 
-    // 2. IDWT Synthesis
-    // Reconstruct the audio perfectly (no aliasing from image injection)
-    waveletProcessor.processIDWT(approxBuffer, detailBuffer, buffer);
-    
-    // Compensate for Orthogonal Wavelet Perfect Reconstruction gain (+6dB)
-    buffer.applyGain(0.5f);
+    // We DO NOT run processIDWT here.
+    // By keeping the original `buffer` untouched, we guarantee 100% bit-perfect audio transparency 
+    // for the dry signal. The Wavelet is now used strictly for analysis (Envelope tracking).
     
     // 3. Image Injection (Full Sample Rate)
     // Synthesize the image at the native sample rate and add directly to the final buffer.
@@ -246,10 +243,8 @@ void SteganographyProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
         spectrogramPushBuffer[(size_t)(i * 2 + 1)] = wetSample;
     }
     
-    // 4. Brickwall Limiter
-    juce::dsp::AudioBlock<float> audioBlock(buffer);
-    juce::dsp::ProcessContextReplacing<float> context(audioBlock);
-    limiter.process(context);
+    // DSP processing done.
+    // The signal is 100% transparent except for the injected watermark. No limiting is applied.
 
     // 5. Push Interleaved Dry/Wet to Spectrogram FIFO
     if (numSamples > 0)
@@ -283,6 +278,20 @@ void SteganographyProcessor::processImageInference(const juce::Image& image)
         if (writeBuffer.size() >= mask.size())
         {
             std::copy(mask.begin(), mask.end(), writeBuffer.begin());
+            maskBridge.swapWriteBuffer();
+            hasValidMask.store(true);
+        }
+    }
+}
+
+void SteganographyProcessor::setMaskDirectly(const std::vector<float>& newMask)
+{
+    if (!newMask.empty())
+    {
+        auto& writeBuffer = maskBridge.getWriteBuffer();
+        if (writeBuffer.size() >= newMask.size())
+        {
+            std::copy(newMask.begin(), newMask.end(), writeBuffer.begin());
             maskBridge.swapWriteBuffer();
             hasValidMask.store(true);
         }
