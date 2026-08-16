@@ -2,13 +2,13 @@
   <br>
   <h1>SIGIL DWT <br><sup>Audio Steganography</sup></h1>
   <p>
-    <a href="https://raw.githubusercontent.com/manwell47/sigil-dwt/main/Releases/SIGIL_DWT_v1.0_Windows.zip"><img src="https://img.shields.io/badge/Download-v1.0_Windows-00e5ff?style=for-the-badge&logo=download" alt="Download Windows Release"></a>
+    <a href="https://github.com/manwell47/sigil-dwt/actions"><img src="https://img.shields.io/github/actions/workflow/status/manwell47/sigil-dwt/build.yml?branch=main&style=for-the-badge&logo=github" alt="Build Status"></a>
     <img src="https://img.shields.io/badge/C%2B%2B-20-blue.svg?style=for-the-badge&logo=c%2B%2B" alt="C++20">
-    <img src="https://img.shields.io/badge/JUCE-8.0-4caf50.svg?style=for-the-badge&logo=c%2B%2B" alt="JUCE 8">
-    <img src="https://img.shields.io/badge/Platform-Windows-0078d7.svg?style=for-the-badge&logo=windows" alt="Windows">
+    <img src="https://img.shields.io/badge/JUCE-9.0-4caf50.svg?style=for-the-badge&logo=c%2B%2B" alt="JUCE 9">
+    <img src="https://img.shields.io/badge/Platform-Win%20%7C%20Mac%20%7C%20Linux-0078d7.svg?style=for-the-badge" alt="Platforms">
   </p>
   <p>
-    <strong>A high-end, commercial-grade audio steganography VST3/Standalone plugin built with C++ and JUCE.</strong>
+    <strong>A high-end, cross-platform commercial-grade audio steganography VST3/Standalone plugin built with C++ and JUCE.</strong>
   </p>
   <br>
 </div>
@@ -60,12 +60,17 @@ The plugin offers a specialized preset architecture tailored for professional au
 
 ## 📥 Installation
 
-Ready-to-use binaries are provided for Windows 10/11.
+Ready-to-use binaries are compiled automatically for **Windows**, **macOS**, and **Ubuntu Linux** upon every update.
 
-1. Head to the **[Releases Folder](https://github.com/manwell47/sigil-dwt/tree/main/Releases)** in this repository.
-2. Download `SIGIL_DWT_v1.0_Windows.zip`.
-3. Extract the ZIP and copy `DWT Steganography.vst3` to `C:\Program Files\Common Files\VST3`.
-4. Alternatively, launch the `.exe` for standalone processing.
+1. Head to the **[Actions Tab](https://github.com/manwell47/sigil-dwt/actions/workflows/build.yml)** in this repository.
+2. Click on the latest green (successful) run.
+3. Scroll down to the **Artifacts** section at the bottom of the page.
+4. Download the ZIP file for your operating system (`SIGIL_DWT_Windows`, `SIGIL_DWT_macOS`, or `SIGIL_DWT_Linux`).
+5. Extract the ZIP and place the `.vst3` file in your standard VST3 plugins folder:
+   - **Windows:** `C:\Program Files\Common Files\VST3`
+   - **macOS:** `/Library/Audio/Plug-Ins/VST3`
+   - **Linux:** `~/.vst3` or `/usr/lib/vst3`
+6. Alternatively, launch the standalone executable included in the ZIP to use it without a DAW.
 
 ---
 
