@@ -53,12 +53,7 @@ target_sources(SteganographyPlugin
         ${WavelibFiles}
 )
 
-# Compiler flags for SIMD and Real-Time performance
-if (MSVC)
-    target_compile_options(SteganographyPlugin PRIVATE /O2 /arch:AVX2 /fp:fast)
-else()
-    target_compile_options(SteganographyPlugin PRIVATE -O3 -mavx2 -ffast-math)
-endif()
+# Compiler flags removed for cross-platform compatibility. JUCE handles SIMD.
 
 # Suppress VST2 replacement error
 target_compile_definitions(SteganographyPlugin PUBLIC JUCE_VST3_CAN_REPLACE_VST2=0)
