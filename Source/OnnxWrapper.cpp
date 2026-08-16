@@ -1,5 +1,6 @@
 #include "OnnxWrapper.h"
 #include <cmath>
+#include <algorithm>
 
 namespace steganography
 {
