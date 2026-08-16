@@ -1,8 +1,8 @@
 <div align="center">
   <br>
-  <h1>🎛️ SIGIL DWT <br><sup>Premium Audio Steganography</sup></h1>
+  <h1>🎛️ SIGIL DWT <br><sup>Audio Steganography</sup></h1>
   <p>
-    <a href="https://github.com/manwell47/sigil-dwt/releases/latest"><img src="https://img.shields.io/github/v/release/manwell47/sigil-dwt?color=00e5ff&style=for-the-badge" alt="Release"></a>
+    <a href="https://raw.githubusercontent.com/manwell47/sigil-dwt/main/Releases/SIGIL_DWT_v1.0_Windows.zip"><img src="https://img.shields.io/badge/Download-v1.0_Windows-00e5ff?style=for-the-badge&logo=download" alt="Download Windows Release"></a>
     <img src="https://img.shields.io/badge/C%2B%2B-20-blue.svg?style=for-the-badge&logo=c%2B%2B" alt="C++20">
     <img src="https://img.shields.io/badge/JUCE-8.0-4caf50.svg?style=for-the-badge&logo=c%2B%2B" alt="JUCE 8">
     <img src="https://img.shields.io/badge/Platform-Windows-0078d7.svg?style=for-the-badge&logo=windows" alt="Windows">
