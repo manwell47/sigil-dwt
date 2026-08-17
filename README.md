@@ -2,6 +2,7 @@
   <br>
   <h1>SIGIL DWT <br><sup>Audio Steganography</sup></h1>
   <p>
+    <a href="https://github.com/manwell47/sigil-dwt/releases/latest"><img src="https://img.shields.io/badge/Download-Latest_Release-00e5ff?style=for-the-badge&logo=download" alt="Download Release"></a>
     <a href="https://github.com/manwell47/sigil-dwt/actions"><img src="https://img.shields.io/github/actions/workflow/status/manwell47/sigil-dwt/build.yml?branch=main&style=for-the-badge&logo=github" alt="Build Status"></a>
     <img src="https://img.shields.io/badge/C%2B%2B-20-blue.svg?style=for-the-badge&logo=c%2B%2B" alt="C++20">
     <img src="https://img.shields.io/badge/JUCE-9.0-4caf50.svg?style=for-the-badge&logo=c%2B%2B" alt="JUCE 9">
@@ -62,11 +63,9 @@ The plugin offers a specialized preset architecture tailored for professional au
 
 Ready-to-use binaries are compiled automatically for **Windows**, **macOS**, and **Ubuntu Linux** upon every update.
 
-1. Head to the **[Actions Tab](https://github.com/manwell47/sigil-dwt/actions/workflows/build.yml)** in this repository.
-2. Click on the latest green (successful) run.
-3. Scroll down to the **Artifacts** section at the bottom of the page.
-4. Download the ZIP file for your operating system (`SIGIL_DWT_Windows`, `SIGIL_DWT_macOS`, or `SIGIL_DWT_Linux`).
-5. Extract the ZIP and place the `.vst3` file in your standard VST3 plugins folder:
+1. Head to the **[Releases Page](https://github.com/manwell47/sigil-dwt/releases/tag/continuous)** in this repository.
+2. Download the ZIP file for your operating system (`SIGIL_DWT_Windows.zip`, `SIGIL_DWT_macOS.zip`, or `SIGIL_DWT_Linux.zip`).
+3. Extract the ZIP and place the `.vst3` file in your standard VST3 plugins folder:
    - **Windows:** `C:\Program Files\Common Files\VST3`
    - **macOS:** `/Library/Audio/Plug-Ins/VST3`
    - **Linux:** `~/.vst3` or `/usr/lib/vst3`

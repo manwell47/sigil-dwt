@@ -71,3 +71,46 @@ jobs:
         path: |
           build/SteganographyPlugin_artefacts/Release/Standalone/DWT Steganography
           build/SteganographyPlugin_artefacts/Release/VST3/DWT Steganography.vst3
+  release:
+    name: Publish Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    steps:
+      - name: Download Windows Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: SIGIL_DWT_Windows
+          path: SIGIL_DWT_Windows
+          
+      - name: Download macOS Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: SIGIL_DWT_macOS
+          path: SIGIL_DWT_macOS
+          
+      - name: Download Linux Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: SIGIL_DWT_Linux
+          path: SIGIL_DWT_Linux
+          
+      - name: Zip Artifacts
+        run: |
+          cd SIGIL_DWT_Windows && zip -r ../SIGIL_DWT_Windows.zip . && cd ..
+          cd SIGIL_DWT_macOS && zip -r ../SIGIL_DWT_macOS.zip . && cd ..
+          cd SIGIL_DWT_Linux && zip -r ../SIGIL_DWT_Linux.zip . && cd ..
+
+      - name: Update Continuous Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: continuous
+          name: Continuous Build
+          body: "Automated build of the latest commit on the main branch."
+          prerelease: true
+          files: |
+            SIGIL_DWT_Windows.zip
+            SIGIL_DWT_macOS.zip
+            SIGIL_DWT_Linux.zip
